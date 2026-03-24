@@ -25,7 +25,7 @@ local redzlib = {
 
 	    ["Color Text"] = Color3.fromRGB(255, 255, 255),
 
-	    ["Color Dark Text"] = Color3.fromRGB(30, 30, 30)
+	    ["Color Dark Text"] = Color3.fromRGB(200, 200, 200)
         },
 		Dark = {
 			["Color Hub 1"] = ColorSequence.new({
