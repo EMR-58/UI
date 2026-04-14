@@ -1,0 +1,155 @@
+setfpscap(600)
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Stats = game:GetService("Stats")
+
+local VisualizerEnabled = getgenv().visualizer
+
+local function CreateVisualizerPart(name, color, parent)
+    local part = Instance.new("Part")
+    part.Name = name
+    part.Anchored = true
+    part.Size = Vector3.new(10, 0.4, 10)
+    part.Color = color
+    part.CanCollide = false
+    part.CastShadow = false
+    part.CanQuery = false
+    part.Transparency = 1
+    local mesh = Instance.new("SpecialMesh")
+    mesh.Parent = part
+    mesh.MeshType = Enum.MeshType.FileMesh
+    mesh.MeshId = "rbxassetid://471124075"
+    mesh.Scale = Vector3.new(0.067, 0.042, 0.067)
+    part.Parent = parent
+    return part
+end
+
+local VisualizerRoot = CreateVisualizerPart("Visualizer", Color3.new(1, 0, 0), Workspace)
+local VisualizerFollowBall = CreateVisualizerPart("VisualizerFollowBall", Color3.new(1, 0, 0), Workspace)
+local VisualizerNoUnit = CreateVisualizerPart("VisualizerNoUnit", Color3.new(1, 0, 1), Workspace)
+local VisualizerFollowBallNoUnit = CreateVisualizerPart("VisualizerFollowBallNoUnit", Color3.new(1, 0, 1), Workspace)
+
+local RangeBillboard = Instance.new("BillboardGui")
+RangeBillboard.Name = "Range"
+RangeBillboard.Parent = game.CoreGui
+RangeBillboard.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+RangeBillboard.Active = true
+RangeBillboard.LightInfluence = 1
+RangeBillboard.Size = UDim2.new(3, 0, 3, 0)
+RangeBillboard.StudsOffset = Vector3.new(0, 5, 0)
+RangeBillboard.Enabled = false
+
+local RangeText = Instance.new("TextLabel")
+RangeText.Name = "Text"
+RangeText.Parent = RangeBillboard
+RangeText.BackgroundTransparency = 1
+RangeText.Size = UDim2.new(1, 0, 0.55, 0)
+RangeText.Position = UDim2.new(0, 0, 0.45, 0)
+RangeText.Font = Enum.Font.FredokaOne
+RangeText.Text = "100"
+RangeText.TextColor3 = Color3.new(1, 1, 1)
+RangeText.TextScaled = true
+RangeText.TextWrapped = true
+
+local RangeMultiText = RangeText:Clone()
+RangeMultiText.Name = "TextMulti"
+RangeMultiText.Parent = RangeBillboard
+RangeMultiText.TextTransparency = 0.5
+RangeMultiText.TextStrokeTransparency = 0.5
+RangeMultiText.Size = UDim2.new(1, 0, 0.45, 0)
+RangeMultiText.Position = UDim2.new(0, 0, 0, 0)
+RangeMultiText.Text = "1x"
+
+local DistanceBillboard = Instance.new("BillboardGui")
+DistanceBillboard.Name = "Distance"
+DistanceBillboard.Parent = game.CoreGui
+DistanceBillboard.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+DistanceBillboard.Active = true
+DistanceBillboard.LightInfluence = 1
+DistanceBillboard.Size = UDim2.new(2, 0, 2, 0)
+DistanceBillboard.StudsOffset = Vector3.new(0, 5, 0)
+DistanceBillboard.Enabled = false
+
+local DistanceText = Instance.new("TextLabel")
+DistanceText.Name = "Text"
+DistanceText.Parent = DistanceBillboard
+DistanceText.BackgroundTransparency = 1
+DistanceText.Size = UDim2.new(1, 0, 1, 0)
+DistanceText.Font = Enum.Font.FredokaOne
+DistanceText.Text = "100"
+DistanceText.TextColor3 = Color3.new(1, 1, 1)
+DistanceText.TextScaled = true
+DistanceText.TextWrapped = true
+
+local function GetTargetBall()
+    for _, ball in pairs(Workspace.Balls:GetChildren()) do
+        if ball:IsA("BasePart") and ball.Velocity ~= Vector3.zero then
+            return ball
+        end
+    end
+    return nil
+end
+
+local function Round(num, decimalPlaces)
+    local mult = 10 ^ (decimalPlaces or 0)
+    return math.floor(num * mult + 0.5) / mult
+end
+
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.X then
+        VisualizerEnabled = not VisualizerEnabled
+        getgenv().visualizer = VisualizerEnabled
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    local enabled = getgenv().visualizer
+    local transparency = enabled and 0 or 1
+    local billboardEnabled = enabled
+
+    VisualizerRoot.Transparency = transparency
+    VisualizerFollowBall.Transparency = transparency
+    VisualizerNoUnit.Transparency = transparency
+    VisualizerFollowBallNoUnit.Transparency = transparency
+    RangeBillboard.Enabled = billboardEnabled
+    DistanceBillboard.Enabled = billboardEnabled
+
+    if not enabled then return end
+
+    local character = LocalPlayer.Character
+    if not character then return end
+
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then return end
+
+    local ball = GetTargetBall()
+    if not ball then return end
+
+    VisualizerRoot.CFrame = rootPart.CFrame
+    VisualizerNoUnit.CFrame = rootPart.CFrame
+
+    local lookAtCFrame = CFrame.lookAt(rootPart.Position, ball.Position)
+    VisualizerFollowBall.CFrame = lookAtCFrame
+    VisualizerFollowBallNoUnit.CFrame = lookAtCFrame
+
+    RangeBillboard.Adornee = rootPart
+    DistanceBillboard.Adornee = ball
+
+    local distance = (rootPart.Position - ball.Position).Magnitude
+    local speed = ball.Velocity.Magnitude
+    local ping = Stats.Network.ServerStatsItem["Data Ping"]:GetValue()
+    local directionFactor = (ball.Velocity.Unit - CFrame.new(ball.Position, rootPart.Position).LookVector).Magnitude
+    local prediction = (ping / 9) + (speed * 0.3)
+    local multiplier = 1.1 - (directionFactor / 4)
+
+    RangeText.Text = tostring(math.floor(prediction))
+    RangeMultiText.Text = tostring(Round(multiplier, 2)) .. "x"
+    DistanceText.Text = tostring(math.floor(distance))
+end)
+
+getgenv().GetBall = GetTargetBall
+getgenv().Round = Round
