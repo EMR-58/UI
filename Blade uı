@@ -5,6 +5,8 @@ setfpscap(600)
 
 local _ = fenv.exe
 
+print('exe is sexy')
+
 genv.exe = true
 
 local _LocalPlayer6 = game.Players.LocalPlayer
