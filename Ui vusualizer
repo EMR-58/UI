@@ -1,0 +1,3 @@
+--Red Circle Auto-Block:
+getgenv().visualizer = true
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EMR-58/UI/refs/heads/main/Blade%20u%C4%B1"))()
