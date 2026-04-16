@@ -6,10 +6,10 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 local Window = WindUI:CreateWindow({
-    Title   = "Syniox Hub MM2",
+    Title   = "Syniox Hub MM2 xd",
     Author  = "by YSF",
     Folder  = "myhub",
-    Icon    = "knife",
+    Icon    = "sword",
     Theme   = "Crimson",
     Acrylic = true,
     Transparent = true,
