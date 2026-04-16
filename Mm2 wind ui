@@ -6,8 +6,8 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 local Window = WindUI:CreateWindow({
-    Title   = "My Script Hub",
-    Author  = "by you",
+    Title   = "Syniox Hub MM2",
+    Author  = "by YSF",
     Folder  = "myhub",
     Icon    = "paint-bucket",
     Theme   = "Dark",
@@ -28,7 +28,7 @@ local Window = WindUI:CreateWindow({
         ButtonsType = "Default",
     },
     OpenButton = {
-        Title = "My Hub",
+        Title = "Syniox Hub",
         Icon = "zap",
         CornerRadius = UDim.new(1, 0),
         StrokeThickness = 3,
