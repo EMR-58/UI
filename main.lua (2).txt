@@ -13913,7 +13913,7 @@ aa.Themes=a.load'u'(aa,ao)
 
 ao.Themes=aa.Themes
 
-aa:SetTheme"Dark"
+aa:SetTheme"Crimson"
 aa:SetLanguage(ao.Language)
 
 function aa.CreateWindow(av,aw)
@@ -13941,7 +13941,7 @@ end
 
 local ay=true
 
-local az=aa.Themes[aw.Theme or"Dark"]
+local az=aa.Themes[aw.Theme or"Crimson"]
 
 
 ao.SetTheme(az)
