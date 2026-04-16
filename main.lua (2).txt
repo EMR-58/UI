@@ -648,7 +648,7 @@ end
 v=getValue(r,p.Themes.Dark)
 if v~=nil then
 if typeof(v)=="string"and string.sub(v,1,1)~="#"then
-local z=p.GetThemeProperty(v,p.Themes.Dark)
+local z=p.GetThemeProperty(v,p.Themes.Crimson)
 if z~=nil then
 return z
 end
@@ -659,7 +659,7 @@ end
 
 if x~=nil then
 if typeof(x)=="string"and string.sub(x,1,1)~="#"then
-return p.GetThemeProperty(x,p.Themes.Dark)
+return p.GetThemeProperty(x,p.Themes.Crimson)
 else
 return getValue(r,{[r]=x})
 end
