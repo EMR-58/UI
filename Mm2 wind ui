@@ -56,63 +56,9 @@ local MainTab = Window:Tab({
     Icon = "house"
 })
 
--- Settings Tab
--- Theme
-local ThemeTab = Window:Tab({ Title = "Settings", Icon = "settings" })
-
-ThemeTab:Dropdown({
-    Title  = "Theme",
-    Values = (function()
-        local names = {}
-        for name in pairs(WindUI:GetThemes()) do
-            table.insert(names, name)
-        end
-        table.sort(names)
-        return names
-    end)(),
-    Value    = WindUI:GetCurrentTheme(),
-    Callback = function(selected)
-        WindUI:SetTheme(selected)
-    end,
-})
-
-ThemeTab:Toggle({
-    Title = "Acrylic",
-    Value = WindUI : GetTransparency(),
-    Callback = function()
-        local isOn = WindUI.Window.Acrylic
-        WindUI:ToggleAcrylic(not isOn)
-    end,
-})
-
-ThemeTab:Toggle({
-    Title = "Transparent",
-    Value = WindUI:GetTransparency(),
-    Callback = function(state)
-        Window:ToggleTransparency(state)
-    end
-})
-
-local currentKey = Enum.KeyCode.RightShift
-
-ThemeTab:Keybind({
-    Title = "Toggle UI Key",
-    Value = currentKey,
-    Callback = function(v)
-        currentKey = (typeof(v) == "EnumItem") and v or Enum.KeyCode[v]
-        Window:SetToggleKey(currentKey)
-    end,
-})
-
-UserInputService.InputBegan:Connect(function(input)
-    if input.KeyCode == currentKey then
-        Window:Toggle()
-    end
-end)
-
 WindUI:Notify({
-  Title = "PlayerHub",
-  Content = "Welcome to PlayerHub!",
+  Title = "Syniox Hub",
+  Content = "Welcome to Syniox Hub!",
 })
 
 WindUI:SetNotificationLower(true)
