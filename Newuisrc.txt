@@ -1,1011 +1,560 @@
 local TweenService = game:GetService("TweenService")
+local RunService   = game:GetService("RunService")
 local Players      = game:GetService("Players")
 local Player       = Players.LocalPlayer
 local PlayerGui    = Player:WaitForChild("PlayerGui")
+local CoreGui      = game:GetService("CoreGui")
 
+-- [ AYARLAR ] --
 local CORRECT_KEY  = "Syniox-X-Yusuf"
 local DISCORD_LINK = "https://discord.gg/LİNK"
 local KEY_LINK     = "https://discord.gg/LİNK"
+
+-- Eğer eski GUI varsa sil (Yenilenme için)
+for _, gui in ipairs(PlayerGui:GetChildren()) do
+    if gui.Name == "SynioxDimensionUI" then
+        gui:Destroy()
+    end
+end
+pcall(function()
+    for _, gui in ipairs(CoreGui:GetChildren()) do
+        if gui.Name == "SynioxDimensionUI" then
+            gui:Destroy()
+        end
+    end
+end)
 
 local function safeSetClipboard(text)
     local ok = pcall(setclipboard, text)
     if not ok then pcall(function() clipboard.set(text) end) end
 end
 
-local function createParticles(parent, count, color)
-    if not parent then return end
-    for _ = 1, count do
-        local p = Instance.new("Frame")
-        p.Size = UDim2.new(0, math.random(3,8), 0, math.random(3,8))
-        p.Position = UDim2.new(math.random()*0.8+0.1, 0, math.random()*0.8+0.1, 0)
-        p.BackgroundColor3 = color
-        p.BorderSizePixel = 0
-        p.ZIndex = 9999998
-        p.Parent = parent
-        local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1,0); c.Parent = p
-        local t = TweenService:Create(p, TweenInfo.new(math.random(10,25)/10, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Position = UDim2.new(math.random()*0.9, 0, math.random()*0.9, 0),
-            BackgroundTransparency = 1,
-            Size = UDim2.new(0, math.random(1,3), 0, math.random(1,3)),
-            Rotation = math.random(-360,360)
-        })
-        t:Play()
-        t.Completed:Connect(function() if p then p:Destroy() end end)
-    end
-end
+-- [ ANA GUI OLUŞTURMA ] --
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "SynioxDimensionUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true -- Tam ekran yapması için çok önemli
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 
-local function addStarBackground(parent)
-    for _ = 1, 40 do
-        local star = Instance.new("Frame")
-        local sz = math.random(1,3)
-        star.Size = UDim2.new(0, sz, 0, sz)
-        star.Position = UDim2.new(math.random(), 0, math.random(), 0)
-        star.BackgroundColor3 = Color3.fromRGB(255, math.random(100,200), math.random(100,150))
-        star.BackgroundTransparency = math.random(3,8)/10
-        star.BorderSizePixel = 0
-        star.ZIndex = 999990
-        star.Parent = parent
-        local corner = Instance.new("UICorner"); corner.CornerRadius = UDim.new(1,0); corner.Parent = star
-        task.delay(math.random(0,30)/10, function()
-            if not star.Parent then return end
-            TweenService:Create(star, TweenInfo.new(math.random(8,20)/10, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
-                BackgroundTransparency = math.random(7,10)/10
-            }):Play()
-        end)
-    end
-end
+-- Çoğu exploit CoreGui kullanır, yoksa PlayerGui
+local success = pcall(function() ScreenGui.Parent = CoreGui end)
+if not success then ScreenGui.Parent = PlayerGui end
 
-local function addGradientOverlay(parent)
-    local overlay = Instance.new("Frame")
-    overlay.Size = UDim2.new(1,0,1,0)
-    overlay.BackgroundColor3 = Color3.fromRGB(255,0,0)
-    overlay.BackgroundTransparency = 0.92
-    overlay.BorderSizePixel = 0
-    overlay.ZIndex = 999991
-    overlay.Parent = parent
-    local g = Instance.new("UIGradient")
-    g.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(80,0,0)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(0,0,0))
-    })
-    g.Rotation = 135
-    g.Parent = overlay
-    TweenService:Create(g, TweenInfo.new(4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {Rotation = 315}):Play()
-end
+-- [ TAM EKRAN ARKA PLAN VE EFEKTLER ] --
+local Background = Instance.new("Frame")
+Background.Name = "DimensionBackground"
+Background.Size = UDim2.new(1, 0, 1, 0)
+Background.Position = UDim2.new(0, 0, 0, 0)
+Background.BackgroundColor3 = Color3.fromRGB(5, 0, 0) -- Çok koyu kırmızı/siyah
+Background.BorderSizePixel = 0
+Background.ZIndex = 1
+Background.Parent = ScreenGui
 
-local function makeNeonText(parent, text, size, posX, posY, sizeX, sizeY, color)
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(sizeX or 1, 0, 0, sizeY or 28)
-    lbl.Position = UDim2.new(posX or 0, 0, posY or 0, 0)
-    lbl.BackgroundTransparency = 1
-    lbl.Font = Enum.Font.GothamBold
-    lbl.Text = text
-    lbl.TextColor3 = Color3.fromRGB(255,255,255)
-    lbl.TextSize = size or 14
-    lbl.TextStrokeColor3 = color or Color3.fromRGB(255,0,0)
-    lbl.TextStrokeTransparency = 0.2
-    lbl.TextXAlignment = Enum.TextXAlignment.Center
-    lbl.ZIndex = 9999999
-    lbl.Parent = parent
-    local g = Instance.new("UIGradient")
-    g.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255,120,120)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255,255,255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(255,80,80))
-    })
-    g.Parent = lbl
-    TweenService:Create(g, TweenInfo.new(2.5, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1), {Rotation = 360}):Play()
-    return lbl
-end
+-- İSTEĞE BAĞLI: EĞER KENDİ GÖRSELİNİ KULLANMAK İSTERSEN AŞAĞIDAKİ YORUMU KALDIR VE ID GİR:
+--[[
+local BgImage = Instance.new("ImageLabel")
+BgImage.Size = UDim2.new(1, 0, 1, 0)
+BgImage.BackgroundTransparency = 1
+BgImage.Image = "rbxassetid://SENİN_GÖRSEL_ID_BURAYA" 
+BgImage.ScaleType = Enum.ScaleType.Crop
+BgImage.ZIndex = 2
+BgImage.Parent = Background
+]]
 
-local function makePanel(parent, xScale, xOffset, wScale, wOffset)
-    local f = Instance.new("Frame")
-    f.Size = UDim2.new(wScale, wOffset, 1, -20)
-    f.Position = UDim2.new(xScale, xOffset, 0, 10)
-    f.BackgroundColor3 = Color3.fromRGB(18,0,2)
-    f.BackgroundTransparency = 0.35
-    f.BorderSizePixel = 0
-    f.ZIndex = 999999
-    f.Parent = parent
-    local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0,10); c.Parent = f
-    local s = Instance.new("UIStroke"); s.Color = Color3.fromRGB(180,0,30); s.Thickness = 1.5; s.Parent = f
-    local g = Instance.new("UIGradient")
-    g.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(40,0,5)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(15,0,0))
-    })
-    g.Rotation = 120
-    g.Parent = f
-    return f
-end
+local EffectContainer = Instance.new("Frame")
+EffectContainer.Size = UDim2.new(1, 0, 1, 0)
+EffectContainer.BackgroundTransparency = 1
+EffectContainer.ClipsDescendants = true
+EffectContainer.ZIndex = 3
+EffectContainer.Parent = Background
 
-local function makeMainFrame(parent, w, h, name)
-    local gui = Instance.new("Frame")
-    gui.Name = name or "MainFrame"
-    gui.AnchorPoint = Vector2.new(0.5, 0.5)
-    gui.Position = UDim2.new(0.5, 0, 0.5, 0)
-    gui.Size = UDim2.new(0, w, 0, h)
-    gui.BackgroundColor3 = Color3.fromRGB(8,0,1)
-    gui.BackgroundTransparency = 0.25
-    gui.ClipsDescendants = false
-    gui.ZIndex = 999999
-    gui.Parent = parent
-    local corner = Instance.new("UICorner"); corner.CornerRadius = UDim.new(0,14); corner.Parent = gui
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(255,30,60)
-    stroke.Thickness = 3
-    stroke.ZIndex = 999999
-    stroke.Parent = gui
-    local borderGrad = Instance.new("UIGradient")
-    borderGrad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255,80,80)),
-        ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255,0,30)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(200,0,0)),
-        ColorSequenceKeypoint.new(0.75, Color3.fromRGB(255,50,50)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(255,80,80))
-    })
-    borderGrad.Parent = stroke
-    TweenService:Create(borderGrad, TweenInfo.new(3, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1), {Rotation = 360}):Play()
-    TweenService:Create(stroke, TweenInfo.new(1.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {Thickness = 5}):Play()
-    addStarBackground(gui)
-    addGradientOverlay(gui)
-    return gui
-end
-
-local function buildLeftPanel(leftFrame, title, items)
-    local titleLbl = makeNeonText(leftFrame, title, 15, 0, 0, 1, 38, Color3.fromRGB(255,0,0))
-    titleLbl.Position = UDim2.new(0,8,0,8)
-    titleLbl.Size = UDim2.new(1,-16,0,36)
-    TweenService:Create(titleLbl, TweenInfo.new(1.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {TextStrokeTransparency = 0.6}):Play()
-
-    local sep = Instance.new("Frame")
-    sep.Size = UDim2.new(0.85,0,0,1)
-    sep.Position = UDim2.new(0.075,0,0,47)
-    sep.BackgroundColor3 = Color3.fromRGB(255,40,40)
-    sep.BackgroundTransparency = 0.4
-    sep.BorderSizePixel = 0
-    sep.ZIndex = 9999999
-    sep.Parent = leftFrame
-    local sepG = Instance.new("UIGradient")
-    sepG.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(0,0,0)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255,60,60)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(0,0,0))
-    })
-    sepG.Parent = sep
-
-    local yPos = 52
-    for _, item in ipairs(items) do
-        local row = Instance.new("Frame")
-        row.Size = UDim2.new(1,-14,0,24)
-        row.Position = UDim2.new(0,7,0,yPos)
-        row.BackgroundTransparency = 1
-        row.ZIndex = 9999999
-        row.Parent = leftFrame
-
-        local iconLbl = Instance.new("TextLabel")
-        iconLbl.Size = UDim2.new(0,22,1,0)
-        iconLbl.BackgroundTransparency = 1
-        iconLbl.Font = Enum.Font.GothamBold
-        iconLbl.Text = item[1]
-        iconLbl.TextColor3 = Color3.fromRGB(255,160,160)
-        iconLbl.TextSize = 13
-        iconLbl.TextStrokeColor3 = Color3.fromRGB(255,0,0)
-        iconLbl.TextStrokeTransparency = 0.3
-        iconLbl.TextXAlignment = Enum.TextXAlignment.Left
-        iconLbl.ZIndex = 9999999
-        iconLbl.Parent = row
-
-        local textLbl = Instance.new("TextLabel")
-        textLbl.Size = UDim2.new(1,-26,1,0)
-        textLbl.Position = UDim2.new(0,26,0,0)
-        textLbl.BackgroundTransparency = 1
-        textLbl.Font = Enum.Font.GothamSemibold
-        textLbl.Text = item[2]
-        textLbl.TextColor3 = Color3.fromRGB(255,255,255)
-        textLbl.TextSize = 12
-        textLbl.TextStrokeColor3 = Color3.fromRGB(0,0,0)
-        textLbl.TextStrokeTransparency = 0.1
-        textLbl.TextXAlignment = Enum.TextXAlignment.Left
-        textLbl.ZIndex = 9999999
-        textLbl.Parent = row
-        yPos += 26
-    end
-
-    local creditLbl = Instance.new("TextLabel")
-    creditLbl.Size = UDim2.new(1,-14,0,28)
-    creditLbl.Position = UDim2.new(0,7,1,-34)
-    creditLbl.BackgroundTransparency = 1
-    creditLbl.Font = Enum.Font.GothamSemibold
-    creditLbl.Text = "🤝 Syniox Hub & Nova Hub agreement | ByHalis"
-    creditLbl.TextColor3 = Color3.fromRGB(180,180,180)
-    creditLbl.TextSize = 10
-    creditLbl.TextStrokeColor3 = Color3.fromRGB(0,0,0)
-    creditLbl.TextStrokeTransparency = 0.3
-    creditLbl.TextXAlignment = Enum.TextXAlignment.Center
-    creditLbl.TextWrapped = true
-    creditLbl.ZIndex = 9999999
-    creditLbl.Parent = leftFrame
-end
-
-local function makeButton(parent, text, yPos, h)
-    h = h or 36
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1,-20,0,h)
-    btn.Position = UDim2.new(0,10,0,yPos)
-    btn.BackgroundColor3 = Color3.fromRGB(210,15,35)
-    btn.BackgroundTransparency = 0
-    btn.Text = ""
-    btn.AutoButtonColor = false
-    btn.BorderSizePixel = 0
-    btn.ZIndex = 9999998
-    btn.Parent = parent
-    local corner = Instance.new("UICorner"); corner.CornerRadius = UDim.new(0,10); corner.Parent = btn
-    local grad = Instance.new("UIGradient")
-    grad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255,50,70)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(210,15,35)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(160,5,20))
-    })
-    grad.Rotation = 90
-    grad.Parent = btn
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(255,120,140)
-    stroke.Thickness = 2
-    stroke.ZIndex = 9999999
-    stroke.Parent = btn
-    TweenService:Create(stroke, TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
-        Color = Color3.fromRGB(255,220,220), Thickness = 3.5
-    }):Play()
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1,0,1,0)
-    label.BackgroundTransparency = 1
-    label.Font = Enum.Font.GothamBold
-    label.Text = text
-    label.TextColor3 = Color3.fromRGB(255,255,255)
-    label.TextSize = 15
-    label.TextStrokeColor3 = Color3.fromRGB(0,0,0)
-    label.TextStrokeTransparency = 0
-    label.TextXAlignment = Enum.TextXAlignment.Center
-    label.ZIndex = 99999999
-    label.Parent = btn
-    btn.MouseEnter:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {BackgroundColor3 = Color3.fromRGB(255,40,60)}):Play()
-    end)
-    btn.MouseLeave:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {BackgroundColor3 = Color3.fromRGB(210,15,35)}):Play()
-    end)
-    btn.MouseButton1Down:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.08), {BackgroundColor3 = Color3.fromRGB(140,5,15)}):Play()
-    end)
-    btn.MouseButton1Up:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.08), {BackgroundColor3 = Color3.fromRGB(210,15,35)}):Play()
-    end)
-    return btn, label
-end
-
-local function makeTitleBtn(parent, isMinimize, xPos)
-    local SIZE = 26
-
-    local shadow = Instance.new("Frame")
-    shadow.Size = UDim2.new(0, SIZE + 6, 0, SIZE + 6)
-    shadow.Position = UDim2.new(0, xPos, 0, 0)
-    shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    shadow.BackgroundTransparency = 0.4
-    shadow.BorderSizePixel = 0
-    shadow.ZIndex = 99999994
-    shadow.Parent = parent
-    local shC = Instance.new("UICorner"); shC.CornerRadius = UDim.new(0, 9); shC.Parent = shadow
-
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, SIZE, 0, SIZE)
-    btn.Position = UDim2.new(0, 3, 0, 3)
-    btn.Text = ""
-    btn.AutoButtonColor = false
-    btn.BorderSizePixel = 0
-    btn.ZIndex = 99999998
-    btn.Parent = shadow
-    local corner = Instance.new("UICorner"); corner.CornerRadius = UDim.new(0, 7); corner.Parent = btn
-
-    if isMinimize then
-        local grad = Instance.new("UIGradient")
-        grad.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 210, 40)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 120, 0))
-        })
-        grad.Rotation = 90
-        grad.Parent = btn
-        btn.BackgroundColor3 = Color3.fromRGB(220, 150, 0)
-
-        local stroke = Instance.new("UIStroke")
-        stroke.Color = Color3.fromRGB(255, 230, 80)
-        stroke.Thickness = 2.5
-        stroke.Parent = btn
-
-        local line = Instance.new("Frame")
-        line.AnchorPoint = Vector2.new(0.5, 0.5)
-        line.Size = UDim2.new(0, 18, 0, 4)
-        line.Position = UDim2.new(0.5, 0, 0.5, 0)
-        line.BackgroundColor3 = Color3.fromRGB(80, 40, 0)
-        line.BorderSizePixel = 0
-        line.ZIndex = 99999999
-        line.Parent = btn
-        local lineC = Instance.new("UICorner"); lineC.CornerRadius = UDim.new(1, 0); lineC.Parent = line
-
-        btn.MouseEnter:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.08), {BackgroundColor3 = Color3.fromRGB(255, 210, 40)}):Play()
-            TweenService:Create(shadow, TweenInfo.new(0.08), {BackgroundTransparency = 0.2}):Play()
-        end)
-        btn.MouseLeave:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.08), {BackgroundColor3 = Color3.fromRGB(220, 150, 0)}):Play()
-            TweenService:Create(shadow, TweenInfo.new(0.08), {BackgroundTransparency = 0.4}):Play()
-        end)
-        btn.MouseButton1Down:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.05), {
-                BackgroundColor3 = Color3.fromRGB(160, 90, 0),
-                Size = UDim2.new(0, SIZE - 4, 0, SIZE - 4),
-                Position = UDim2.new(0, 5, 0, 5)
-            }):Play()
-        end)
-        btn.MouseButton1Up:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                BackgroundColor3 = Color3.fromRGB(220, 150, 0),
-                Size = UDim2.new(0, SIZE, 0, SIZE),
-                Position = UDim2.new(0, 3, 0, 3)
-            }):Play()
-        end)
+-- Neon Lazer Efektleri Oluşturucu
+local function createLaser()
+    local laser = Instance.new("Frame")
+    laser.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    laser.BorderSizePixel = 0
+    
+    local isHorizontal = math.random() > 0.5
+    if isHorizontal then
+        laser.Size = UDim2.new(2, 0, 0, math.random(1, 3))
+        laser.Position = UDim2.new(-0.5, 0, math.random(0, 100)/100, 0)
+        laser.Rotation = math.random(-25, 25)
     else
-        local grad = Instance.new("UIGradient")
-        grad.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 80, 80)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(170, 10, 10))
-        })
-        grad.Rotation = 90
-        grad.Parent = btn
-        btn.BackgroundColor3 = Color3.fromRGB(210, 25, 25)
-
-        local stroke = Instance.new("UIStroke")
-        stroke.Color = Color3.fromRGB(120, 0, 0)
-        stroke.Thickness = 3
-        stroke.Parent = btn
-
-        local function makeXLine(rot)
-            local xLine = Instance.new("Frame")
-            xLine.AnchorPoint = Vector2.new(0.5, 0.5)
-            xLine.Size = UDim2.new(0, 20, 0, 4)
-            xLine.Position = UDim2.new(0.5, 0, 0.5, 0)
-            xLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            xLine.BorderSizePixel = 0
-            xLine.Rotation = rot
-            xLine.ZIndex = 99999999
-            xLine.Parent = btn
-            local xC = Instance.new("UICorner"); xC.CornerRadius = UDim.new(1, 0); xC.Parent = xLine
-        end
-        makeXLine(45)
-        makeXLine(-45)
-
-        btn.MouseEnter:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.08), {BackgroundColor3 = Color3.fromRGB(255, 50, 50)}):Play()
-            TweenService:Create(shadow, TweenInfo.new(0.08), {BackgroundTransparency = 0.2}):Play()
-        end)
-        btn.MouseLeave:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.08), {BackgroundColor3 = Color3.fromRGB(210, 25, 25)}):Play()
-            TweenService:Create(shadow, TweenInfo.new(0.08), {BackgroundTransparency = 0.4}):Play()
-        end)
-        btn.MouseButton1Down:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.05), {
-                BackgroundColor3 = Color3.fromRGB(130, 5, 5),
-                Size = UDim2.new(0, SIZE - 4, 0, SIZE - 4),
-                Position = UDim2.new(0, 5, 0, 5)
-            }):Play()
-        end)
-        btn.MouseButton1Up:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                BackgroundColor3 = Color3.fromRGB(210, 25, 25),
-                Size = UDim2.new(0, SIZE, 0, SIZE),
-                Position = UDim2.new(0, 3, 0, 3)
-            }):Play()
-        end)
+        laser.Size = UDim2.new(0, math.random(1, 3), 2, 0)
+        laser.Position = UDim2.new(math.random(0, 100)/100, 0, -0.5, 0)
+        laser.Rotation = math.random(-25, 25)
+    end
+    
+    -- Neon Parlaması
+    local glow = Instance.new("UIStroke")
+    glow.Color = Color3.fromRGB(255, 30, 30)
+    glow.Thickness = math.random(3, 8)
+    glow.Transparency = 0.5
+    glow.Parent = laser
+    
+    laser.ZIndex = 3
+    laser.Parent = EffectContainer
+    
+    local duration = math.random(4, 10)
+    local targetPos
+    if isHorizontal then
+        targetPos = UDim2.new(laser.Position.X.Scale, 0, laser.Position.Y.Scale + (math.random(-50, 50)/100), 0)
+    else
+        targetPos = UDim2.new(laser.Position.X.Scale + (math.random(-50, 50)/100), 0, laser.Position.Y.Scale, 0)
     end
 
-    return shadow, btn
-end
-
-local FloatGui = Instance.new("ScreenGui")
-FloatGui.Name = "NovaFloatBtn"
-FloatGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
-FloatGui.DisplayOrder = 999997
-FloatGui.ResetOnSpawn = false
-FloatGui.Parent = PlayerGui
-
-local FloatOuter = Instance.new("Frame")
-FloatOuter.Size = UDim2.new(0,62,0,62)
-FloatOuter.Position = UDim2.new(0,20,0.5,-31)
-FloatOuter.AnchorPoint = Vector2.new(0,0.5)
-FloatOuter.BackgroundColor3 = Color3.fromRGB(200,0,25)
-FloatOuter.BackgroundTransparency = 0.15
-FloatOuter.Visible = false
-FloatOuter.ZIndex = 99999990
-FloatOuter.Parent = FloatGui
-local foCorner = Instance.new("UICorner"); foCorner.CornerRadius = UDim.new(1,0); foCorner.Parent = FloatOuter
-local foStroke = Instance.new("UIStroke"); foStroke.Color = Color3.fromRGB(255,60,80); foStroke.Thickness = 2.5; foStroke.Parent = FloatOuter
-TweenService:Create(foStroke, TweenInfo.new(1.4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
-    Color = Color3.fromRGB(255,200,210), Thickness = 4
-}):Play()
-TweenService:Create(FloatOuter, TweenInfo.new(1.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
-    BackgroundTransparency = 0.4
-}):Play()
-
-local FloatBtn = Instance.new("ImageButton")
-FloatBtn.Size = UDim2.new(0.78,0,0.78,0)
-FloatBtn.Position = UDim2.new(0.11,0,0.11,0)
-FloatBtn.BackgroundTransparency = 1
-FloatBtn.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=SENİN ID"
-FloatBtn.ScaleType = Enum.ScaleType.Fit
-FloatBtn.ZIndex = 99999999
-FloatBtn.Parent = FloatOuter
-
-local function showFloat()
-    FloatOuter.Visible = true
-    FloatOuter.Size = UDim2.new(0,0,0,0)
-    TweenService:Create(FloatOuter, TweenInfo.new(0.42, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0,62,0,62)
-    }):Play()
-end
-
-local function hideFloat(callback)
-    TweenService:Create(FloatOuter, TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-        Size = UDim2.new(0,0,0,0)
-    }):Play()
-    task.delay(0.22, function()
-        FloatOuter.Visible = false
-        FloatOuter.Size = UDim2.new(0,62,0,62)
-        if callback then callback() end
-    end)
-end
-
-local function playOpenAnim(frame, targetW, targetH, centerY)
-    frame.Visible = false
-    frame.ClipsDescendants = true
-    frame.Size = UDim2.new(0, targetW, 0, targetH)
-    frame.Position = UDim2.new(0.5, 0, -0.6, 0)
-    frame.BackgroundTransparency = 0.25
-
-    for _, d in ipairs(frame:GetDescendants()) do
-        if d:IsA("TextLabel") or d:IsA("TextButton") then
-            d.TextTransparency = 1
-            d.TextStrokeTransparency = 1
-        end
-    end
-
-    task.wait()
-    task.wait()
-    frame.Visible = true
-
-   local anim = TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0.5, 0, centerY, 0)
+    local tween = TweenService:Create(laser, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
+        Position = targetPos,
+        BackgroundTransparency = 1
     })
-    anim:Play()
-
-    anim.Completed:Connect(function()
-        frame.ClipsDescendants = false
-    end)
-
-    task.delay(0.25, function()
-        for _, d in ipairs(frame:GetDescendants()) do
-            if (d:IsA("TextLabel") or d:IsA("TextButton")) and d.Parent then
-                TweenService:Create(d, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                    TextTransparency = 0,
-                    TextStrokeTransparency = 0.05
-                }):Play()
-            end
-        end
-    end)
+    
+    TweenService:Create(glow, TweenInfo.new(duration, Enum.EasingStyle.Linear), {Transparency = 1}):Play()
+    tween:Play()
+    tween.Completed:Connect(function() laser:Destroy() end)
 end
 
-local KeyScreenGui = Instance.new("ScreenGui")
-KeyScreenGui.Name = "NovaHubKeySystem"
-KeyScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
-KeyScreenGui.DisplayOrder = 999999
-KeyScreenGui.ResetOnSpawn = false
-KeyScreenGui.Parent = PlayerGui
-
--- Genişlik 700'den 400'e düşürüldü ki ortalandığında şık dursun
-local MainContainer = makeMainFrame(KeyScreenGui, 400, 250, "MainContainer")
-MainContainer.Position = UDim2.new(0.5, 0, 0.45, 0)
-MainContainer.Visible = false
-
--- Sağ panel artık %100 (1) genişliğinde yapıldı
-local RightFrame = makePanel(MainContainer, 0, 10, 1, -20)
-
-local keyLogoImg = Instance.new("ImageLabel")
-keyLogoImg.Size = UDim2.new(0, 40, 0, 40)
-keyLogoImg.Position = UDim2.new(0, 8, 0, 4)
-keyLogoImg.BackgroundTransparency = 1
-keyLogoImg.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=SENİN ID"
-keyLogoImg.ScaleType = Enum.ScaleType.Fit
-keyLogoImg.ZIndex = 9999999
-keyLogoImg.Parent = RightFrame
-
-local keyTitle = makeNeonText(RightFrame, "🔑  KEY SYSTEM  🔑", 14, 0, 0, 1, 34)
-keyTitle.Position = UDim2.new(0, 55, 0, 10)
-keyTitle.Size = UDim2.new(1, -120, 0, 28)
-keyTitle.TextXAlignment = Enum.TextXAlignment.Left
-
-local BtnGroup = Instance.new("Frame")
-BtnGroup.Size = UDim2.new(0, 64, 0, 28)
-BtnGroup.Position = UDim2.new(1, -70, 0, 6)
-BtnGroup.BackgroundTransparency = 1
-BtnGroup.ZIndex = 99999999
-BtnGroup.Parent = MainContainer
-
-local MinimizeShadow, MinimizeBtn = makeTitleBtn(BtnGroup, true,  0)
-local CloseShadow,    CloseBtn    = makeTitleBtn(BtnGroup, false, 34)
-
-local inputCont = Instance.new("Frame")
-inputCont.Size = UDim2.new(1,-18,0,38)
-inputCont.Position = UDim2.new(0,9,0,46)
-inputCont.BackgroundColor3 = Color3.fromRGB(30,0,4)
-inputCont.BackgroundTransparency = 0.1
-inputCont.BorderSizePixel = 0
-inputCont.ZIndex = 9999998
-inputCont.Parent = RightFrame
-local ic = Instance.new("UICorner"); ic.CornerRadius = UDim.new(0,8); ic.Parent = inputCont
-local is = Instance.new("UIStroke"); is.Color = Color3.fromRGB(200,30,50); is.Thickness = 1.5; is.Parent = inputCont
-TweenService:Create(is, TweenInfo.new(1.4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {Thickness = 2.5}):Play()
-
-local KeyInput = Instance.new("TextBox")
-KeyInput.Size = UDim2.new(1,-12,1,-8)
-KeyInput.Position = UDim2.new(0,6,0,4)
-KeyInput.BackgroundTransparency = 1
-KeyInput.PlaceholderText = "🔐  Enter your key here..."
-KeyInput.PlaceholderColor3 = Color3.fromRGB(200,80,90)
-KeyInput.Text = ""
-KeyInput.TextColor3 = Color3.fromRGB(255,255,255)
-KeyInput.Font = Enum.Font.GothamBold
-KeyInput.TextSize = 14
-KeyInput.TextStrokeColor3 = Color3.fromRGB(0,0,0)
-KeyInput.TextStrokeTransparency = 0.2
-KeyInput.TextXAlignment = Enum.TextXAlignment.Center
-KeyInput.ZIndex = 99999999
-KeyInput.Parent = inputCont
-
-local VerifyBtn, VerifyLabel = makeButton(RightFrame, "🚀  VERIFY KEY  🚀", 90, 38)
-
-local linksTitle = makeNeonText(RightFrame, "🔗  OUR LINKS  🔗", 12, 0, 0, 1, 24)
-linksTitle.Position = UDim2.new(0,8,0,136)
-linksTitle.Size = UDim2.new(1,-16,0,22)
-
-local JoinDiscordBtn, JoinDiscordLabel = makeButton(RightFrame, "💬  JOIN DISCORD  💬", 162, 33)
-local GetKeyBtn, GetKeyLabel           = makeButton(RightFrame, "🔑  GET KEY  (Discord)  🔑", 200, 33)
-
-local LoaderScreenGui = Instance.new("ScreenGui")
-LoaderScreenGui.Name = "NovaHubLoader"
-LoaderScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
-LoaderScreenGui.DisplayOrder = 999998
-LoaderScreenGui.ResetOnSpawn = false
-LoaderScreenGui.Parent = PlayerGui
-
--- Loader için de genişlik 700'den 400'e düşürüldü
-local LoaderFrame = makeMainFrame(LoaderScreenGui, 400, 250, "LoaderFrame")
-LoaderFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-LoaderFrame.Active = true
-LoaderFrame.Draggable = true
-LoaderFrame.Visible = false
-LoaderFrame.BackgroundTransparency = 1
-LoaderFrame.Size = UDim2.new(0,40,0,20)
-
--- Sağ panel (Loader) artık %100 (1) genişliğinde yapıldı
-local LdrRight = makePanel(LoaderFrame, 0, 10, 1, -20)
-
-local LdrBtnGroup = Instance.new("Frame")
-LdrBtnGroup.Size = UDim2.new(0, 64, 0, 28)
-LdrBtnGroup.Position = UDim2.new(1, -70, 0, 6)
-LdrBtnGroup.BackgroundTransparency = 1
-LdrBtnGroup.ZIndex = 99999999
-LdrBtnGroup.Parent = LoaderFrame
-
-local LdrMinShadow, LdrMinimizeBtn = makeTitleBtn(LdrBtnGroup, true,  0)
-local LdrClsShadow, LdrCloseBtn    = makeTitleBtn(LdrBtnGroup, false, 34)
-
-local ldrLogoImg = Instance.new("ImageLabel")
-ldrLogoImg.Size = UDim2.new(0, 40, 0, 40)
-ldrLogoImg.Position = UDim2.new(0, 8, 0, 4)
-ldrLogoImg.BackgroundTransparency = 1
-ldrLogoImg.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=SENİN ASET ID"
-ldrLogoImg.ScaleType = Enum.ScaleType.Fit
-ldrLogoImg.ZIndex = 9999999
-ldrLogoImg.Parent = LdrRight
-
-local ldrTitle = makeNeonText(LdrRight, "🚀  SELECT SCRIPT  🚀", 14, 0, 0, 1, 34)
-ldrTitle.Position = UDim2.new(0, 55, 0, 10)
-ldrTitle.Size = UDim2.new(1, -120, 0, 28)
-ldrTitle.TextXAlignment = Enum.TextXAlignment.Left
-
-local ldrSep = Instance.new("Frame")
-ldrSep.Size = UDim2.new(0.88,0,0,1)
-ldrSep.Position = UDim2.new(0.06,0,0,45)
-ldrSep.BackgroundColor3 = Color3.fromRGB(255,40,40)
-ldrSep.BackgroundTransparency = 0.4
-ldrSep.BorderSizePixel = 0
-ldrSep.ZIndex = 9999999
-ldrSep.Parent = LdrRight
-local ldrSepG = Instance.new("UIGradient")
-ldrSepG.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(0,0,0)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255,60,60)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(0,0,0))
-})
-ldrSepG.Parent = ldrSep
-
-local searchCont = Instance.new("Frame")
-searchCont.Size = UDim2.new(1,-18,0,30)
-searchCont.Position = UDim2.new(0,9,0,50)
-searchCont.BackgroundColor3 = Color3.fromRGB(10,0,1)
-searchCont.BackgroundTransparency = 0.2
-searchCont.BorderSizePixel = 0
-searchCont.ZIndex = 9999999
-searchCont.Parent = LdrRight
-local sc1 = Instance.new("UICorner"); sc1.CornerRadius = UDim.new(0,8); sc1.Parent = searchCont
-local sc2 = Instance.new("UIStroke"); sc2.Color = Color3.fromRGB(255,60,80); sc2.Thickness = 1.5; sc2.Parent = searchCont
-TweenService:Create(sc2, TweenInfo.new(1.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
-    Color = Color3.fromRGB(255,180,180), Thickness = 2.5
-}):Play()
-
-local searchIcon = Instance.new("TextLabel")
-searchIcon.Size = UDim2.new(0,24,1,0)
-searchIcon.Position = UDim2.new(0,6,0,0)
-searchIcon.BackgroundTransparency = 1
-searchIcon.Font = Enum.Font.GothamBold
-searchIcon.Text = "🔍"
-searchIcon.TextSize = 13
-searchIcon.ZIndex = 99999999
-searchIcon.Parent = searchCont
-
-local SearchBox = Instance.new("TextBox")
-SearchBox.Size = UDim2.new(1,-36,1,-6)
-SearchBox.Position = UDim2.new(0,28,0,3)
-SearchBox.BackgroundTransparency = 1
-SearchBox.PlaceholderText = "Search game..."
-SearchBox.PlaceholderColor3 = Color3.fromRGB(200,100,110)
-SearchBox.Text = ""
-SearchBox.TextColor3 = Color3.fromRGB(255,255,255)
-SearchBox.Font = Enum.Font.GothamSemibold
-SearchBox.TextSize = 13
-SearchBox.TextStrokeColor3 = Color3.fromRGB(0,0,0)
-SearchBox.TextStrokeTransparency = 0.3
-SearchBox.TextXAlignment = Enum.TextXAlignment.Left
-SearchBox.ClearTextOnFocus = false
-SearchBox.ZIndex = 99999999
-SearchBox.Parent = searchCont
-
-local Scroll = Instance.new("ScrollingFrame")
-Scroll.Size = UDim2.new(1,-14,1,-88)
-Scroll.Position = UDim2.new(0,7,0,84)
-Scroll.CanvasSize = UDim2.new(0,0,0,0)
-Scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-Scroll.ScrollBarThickness = 3
-Scroll.ScrollBarImageColor3 = Color3.fromRGB(220,0,0)
-Scroll.BackgroundTransparency = 1
-Scroll.BorderSizePixel = 0
-Scroll.ZIndex = 999999
-Scroll.Parent = LdrRight
-
-local listLayout = Instance.new("UIListLayout")
-listLayout.Padding = UDim.new(0,5)
-listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-listLayout.Parent = Scroll
-
-local listPad = Instance.new("UIPadding")
-listPad.PaddingTop = UDim.new(0,4)
-listPad.PaddingBottom = UDim.new(0,6)
-listPad.Parent = Scroll
-
-local scripts = {
-    {name = "⏰  SC",             url = "KENDİ URLNİ EKLE"},
-    {name = "💪  SC", url = "KENDİ URLNİ EKLE"},
-    {name = "💪  SC",  url = "KENDİ URLNİ EKLE"},
-    {name = "⚡  SC",   url = "KENDİ URLNİ EKLE"},
-    {name = "⚡  SC",             url = "KENDİ URLNİ EKLE"},
-    {name = "🥷  SC",               url = "KENDİ URLNİ EKLE"},
-}
-
-local scriptButtons = {}
-
-local function CreateScriptButton(data, order)
-    local wrapper = Instance.new("Frame")
-    wrapper.Size = UDim2.new(0.97,0,0,36)
-    wrapper.LayoutOrder = order
-    wrapper.BackgroundColor3 = Color3.fromRGB(255,40,60)
-    wrapper.BackgroundTransparency = 0.75
-    wrapper.BorderSizePixel = 0
-    wrapper.ZIndex = 999998
-    wrapper.Parent = Scroll
-    local wc = Instance.new("UICorner"); wc.CornerRadius = UDim.new(0,8); wc.Parent = wrapper
-    TweenService:Create(wrapper, TweenInfo.new(2.2+order*0.1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
-        BackgroundTransparency = 0.88
-    }):Play()
-
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1,-2,1,-2)
-    btn.Position = UDim2.new(0,1,0,1)
-    btn.BackgroundColor3 = Color3.fromRGB(180,10,25)
-    btn.BackgroundTransparency = 0.35
-    btn.Text = ""
-    btn.AutoButtonColor = false
-    btn.BorderSizePixel = 0
-    btn.ZIndex = 9999998
-    btn.Parent = wrapper
-    local bc = Instance.new("UICorner"); bc.CornerRadius = UDim.new(0,7); bc.Parent = btn
-    local grad = Instance.new("UIGradient")
-    grad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(230,45,60)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(140,8,18))
-    })
-    grad.Rotation = 90
-    grad.Parent = btn
-
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1,-8,1,0)
-    lbl.Position = UDim2.new(0,4,0,0)
-    lbl.BackgroundTransparency = 1
-    lbl.Font = Enum.Font.GothamBold
-    lbl.Text = data.name
-    lbl.TextColor3 = Color3.fromRGB(255,255,255)
-    lbl.TextSize = 14
-    lbl.TextStrokeColor3 = Color3.fromRGB(0,0,0)
-    lbl.TextStrokeTransparency = 0
-    lbl.TextXAlignment = Enum.TextXAlignment.Center
-    lbl.ZIndex = 99999999
-    lbl.Parent = btn
-
-    btn.MouseEnter:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
-            BackgroundColor3 = Color3.fromRGB(255,50,70), BackgroundTransparency = 0.05
-        }):Play()
-        TweenService:Create(wrapper, TweenInfo.new(0.15), {BackgroundTransparency = 0.3}):Play()
-        createParticles(wrapper, 5, Color3.fromRGB(255,130,130))
-    end)
-    btn.MouseLeave:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
-            BackgroundColor3 = Color3.fromRGB(180,10,25), BackgroundTransparency = 0.35
-        }):Play()
-        TweenService:Create(wrapper, TweenInfo.new(0.15), {BackgroundTransparency = 0.75}):Play()
-    end)
-
-    btn.MouseButton1Click:Connect(function()
-        lbl.Text = "⏳  EXECUTING..."
-        lbl.TextColor3 = Color3.fromRGB(255,235,60)
-        btn.Active = false
-        createParticles(LoaderFrame, 35, Color3.fromRGB(0,255,120))
-        createParticles(LoaderFrame, 20, Color3.fromRGB(255,200,0))
-        local closeAnim = TweenService:Create(LoaderFrame,
-            TweenInfo.new(0.75, Enum.EasingStyle.Quart, Enum.EasingDirection.InOut),
-            {Position = UDim2.new(0.5, 0, 1.6, 0)}
-        )
-        closeAnim:Play()
-        closeAnim.Completed:Connect(function()
-            LoaderScreenGui:Destroy()
-            task.wait(0.1)
-            local ok, err = pcall(function() loadstring(game:HttpGet(data.url))() end)
-            if not ok then warn("Script failed:", err) end
-        end)
-    end)
-
-    return wrapper
-end
-
-for i, data in ipairs(scripts) do
-    local w = CreateScriptButton(data, i)
-    table.insert(scriptButtons, {wrapper = w, name = data.name:lower()})
-end
-
-SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
-    local query = SearchBox.Text:lower()
-    for _, entry in ipairs(scriptButtons) do
-        entry.wrapper.Visible = (query == "") or (entry.name:find(query, 1, true) ~= nil)
+-- Lazerleri sürekli oluştur
+local effectLoop = task.spawn(function()
+    while task.wait(0.15) do
+        if not Background.Parent then break end
+        createLaser()
     end
 end)
 
-local keyHidden    = false
-local loaderHidden = false
+local ContentWrapper = Instance.new("Frame")
+ContentWrapper.Size = UDim2.new(1, 0, 1, 0)
+ContentWrapper.BackgroundTransparency = 1
+ContentWrapper.ZIndex = 10
+ContentWrapper.Parent = ScreenGui
 
-local function openLoader()
-    LoaderFrame.Visible = false
-    LoaderFrame.ClipsDescendants = true
-    -- Animasyon boyutu 700'den 400'e güncellendi
-    LoaderFrame.Size = UDim2.new(0, 400, 0, 250)
-    LoaderFrame.Position = UDim2.new(0.5, 0, -0.6, 0)
-    LoaderFrame.BackgroundTransparency = 0.25
+-- [ ORTAK BİLEŞENLER / FONKSİYONLAR ] --
+local function createGlassPanel(name, size, pos)
+    local panel = Instance.new("Frame")
+    panel.Name = name
+    panel.Size = size
+    panel.Position = pos
+    panel.AnchorPoint = Vector2.new(0.5, 0.5)
+    panel.BackgroundColor3 = Color3.fromRGB(15, 0, 5)
+    panel.BackgroundTransparency = 0.3
+    panel.BorderSizePixel = 0
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 12)
+    corner.Parent = panel
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(255, 0, 0)
+    stroke.Thickness = 1.5
+    stroke.Transparency = 0.2
+    stroke.Parent = panel
 
-    for _, d in ipairs(LoaderFrame:GetDescendants()) do
-        if d:IsA("TextLabel") or d:IsA("TextButton") then
-            d.TextTransparency = 1
-            d.TextStrokeTransparency = 1
-        end
-    end
-
-    task.wait()
-    LoaderFrame.Visible = true
-
-    local anim = TweenService:Create(LoaderFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0.5, 0, 0.5, 0)
+    local glow = Instance.new("UIGradient")
+    glow.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 40, 40)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(50, 0, 0)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 40, 40))
     })
-    anim:Play()
-    anim.Completed:Connect(function()
-        LoaderFrame.ClipsDescendants = false
-    end)
-
-    task.delay(0.25, function()
-        for _, d in ipairs(LoaderFrame:GetDescendants()) do
-            if (d:IsA("TextLabel") or d:IsA("TextButton")) and d.Parent then
-                TweenService:Create(d, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                    TextTransparency = 0, TextStrokeTransparency = 0.05
-                }):Play()
-            end
+    glow.Rotation = 45
+    glow.Parent = stroke
+    
+    task.spawn(function()
+        while panel.Parent do
+            TweenService:Create(glow, TweenInfo.new(3, Enum.EasingStyle.Linear), {Rotation = glow.Rotation + 360}):Play()
+            task.wait(3)
         end
+    end)
+    
+    return panel
+end
+
+local function applyHoverEffect(button)
+    button.MouseEnter:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundTransparency = 0.1, Size = UDim2.new(button.Size.X.Scale, button.Size.X.Offset + 4, button.Size.Y.Scale, button.Size.Y.Offset + 2)}):Play()
+    end)
+    button.MouseLeave:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundTransparency = 0.4, Size = UDim2.new(button.Size.X.Scale, button.Size.X.Offset - 4, button.Size.Y.Scale, button.Size.Y.Offset - 2)}):Play()
     end)
 end
 
-MinimizeBtn.MouseButton1Click:Connect(function()
-    if keyHidden then return end
-    keyHidden = true
-    TweenService:Create(MainContainer, TweenInfo.new(0.38, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
-        Position = UDim2.new(0.5, 0, 1.4, 0),
-        BackgroundTransparency = 0.95
-    }):Play()
-    task.delay(0.38, function()
-        MainContainer.Visible = false
-        MainContainer.Position = UDim2.new(0.5, 0, 0.45, 0)
-        showFloat()
+-- [ YÜKLEME EKRANI (PROGRESS BAR) SİSTEMİ ] --
+local LoadingContainer = Instance.new("Frame")
+LoadingContainer.Size = UDim2.new(0, 500, 0, 120)
+LoadingContainer.Position = UDim2.new(0.5, 0, 0.5, 0)
+LoadingContainer.AnchorPoint = Vector2.new(0.5, 0.5)
+LoadingContainer.BackgroundTransparency = 1
+LoadingContainer.Visible = false
+LoadingContainer.ZIndex = 20
+LoadingContainer.Parent = ContentWrapper
+
+local LoadingTitle = Instance.new("TextLabel")
+LoadingTitle.Size = UDim2.new(1, 0, 0, 40)
+LoadingTitle.Position = UDim2.new(0, 0, 0, 0)
+LoadingTitle.BackgroundTransparency = 1
+LoadingTitle.Font = Enum.Font.GothamBlack
+LoadingTitle.Text = "LOADING KEY SYSTEM..."
+LoadingTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+LoadingTitle.TextSize = 24
+LoadingTitle.TextStrokeColor3 = Color3.fromRGB(255, 0, 0)
+LoadingTitle.TextStrokeTransparency = 0.5
+LoadingTitle.ZIndex = 21
+LoadingTitle.Parent = LoadingContainer
+
+local BarBg = Instance.new("Frame")
+BarBg.Size = UDim2.new(1, 0, 0, 8)
+BarBg.Position = UDim2.new(0, 0, 0, 60)
+BarBg.BackgroundColor3 = Color3.fromRGB(30, 0, 0)
+BarBg.BorderSizePixel = 0
+BarBg.ZIndex = 21
+BarBg.Parent = LoadingContainer
+Instance.new("UICorner", BarBg).CornerRadius = UDim.new(1, 0)
+
+local BarFill = Instance.new("Frame")
+BarFill.Size = UDim2.new(0, 0, 1, 0)
+BarFill.BackgroundColor3 = Color3.fromRGB(255, 20, 20)
+BarFill.BorderSizePixel = 0
+BarFill.ZIndex = 22
+BarFill.Parent = BarBg
+Instance.new("UICorner", BarFill).CornerRadius = UDim.new(1, 0)
+
+local glowFill = Instance.new("UIStroke")
+glowFill.Color = Color3.fromRGB(255, 50, 50)
+glowFill.Thickness = 2
+glowFill.Transparency = 0.5
+glowFill.Parent = BarFill
+
+local PercentText = Instance.new("TextLabel")
+PercentText.Size = UDim2.new(1, 0, 0, 30)
+PercentText.Position = UDim2.new(0, 0, 0, 75)
+PercentText.BackgroundTransparency = 1
+PercentText.Font = Enum.Font.GothamBold
+PercentText.Text = "0%"
+PercentText.TextColor3 = Color3.fromRGB(200, 200, 200)
+PercentText.TextSize = 18
+PercentText.ZIndex = 21
+PercentText.Parent = LoadingContainer
+
+local function playLoadingSequence(text, duration, callback)
+    LoadingTitle.Text = text
+    BarFill.Size = UDim2.new(0, 0, 1, 0)
+    PercentText.Text = "0%"
+    
+    LoadingContainer.Position = UDim2.new(0.5, 0, 0.5, 50)
+    LoadingContainer.GroupTransparency = 1
+    LoadingContainer.Visible = true
+    
+    -- Yükleme ekranı giriş animasyonu
+    TweenService:Create(LoadingContainer, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, 0, 0.5, 0)}):Play()
+    local fade = Instance.new("CanvasGroup") -- Transparency kontrolü için
+    
+    local fillTween = TweenService:Create(BarFill, TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Size = UDim2.new(1, 0, 1, 0)})
+    
+    local connection
+    connection = RunService.RenderStepped:Connect(function()
+        local percent = math.floor(BarFill.Size.X.Scale * 100)
+        PercentText.Text = tostring(percent) .. "%"
     end)
-end)
+    
+    fillTween:Play()
+    fillTween.Completed:Wait()
+    connection:Disconnect()
+    PercentText.Text = "100%"
+    
+    task.wait(0.3)
+    
+    -- Yükleme ekranı çıkış animasyonu
+    local outTween = TweenService:Create(LoadingContainer, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Position = UDim2.new(0.5, 0, 0.5, -50)})
+    outTween:Play()
+    outTween.Completed:Wait()
+    LoadingContainer.Visible = false
+    
+    if callback then callback() end
+end
 
-CloseBtn.MouseButton1Click:Connect(function()
-    TweenService:Create(MainContainer, TweenInfo.new(0.28, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
-        Size = UDim2.new(0,0,0,0), BackgroundTransparency = 1
-    }):Play()
-    task.delay(0.3, function()
-        KeyScreenGui:Destroy()
-        FloatGui:Destroy()
-    end)
-end)
+-- [ KEY SİSTEMİ ARAYÜZÜ ] --
+local KeyUI = createGlassPanel("KeyUI", UDim2.new(0, 450, 0, 280), UDim2.new(0.5, 0, 0.5, 0))
+KeyUI.Visible = false
+KeyUI.Parent = ContentWrapper
 
-LdrMinimizeBtn.MouseButton1Click:Connect(function()
-    if loaderHidden then return end
-    loaderHidden = true
-    TweenService:Create(LoaderFrame, TweenInfo.new(0.38, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
-        Position = UDim2.new(0.5, 0, 1.4, 0),
-        BackgroundTransparency = 0.95
-    }):Play()
-    task.delay(0.38, function()
-        LoaderFrame.Visible = false
-        LoaderFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-        showFloat()
-    end)
-end)
+local KeyTitle = Instance.new("TextLabel")
+KeyTitle.Size = UDim2.new(1, 0, 0, 60)
+KeyTitle.Position = UDim2.new(0, 0, 0, 10)
+KeyTitle.BackgroundTransparency = 1
+KeyTitle.Font = Enum.Font.GothamBlack
+KeyTitle.Text = "S Y N I O X"
+KeyTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyTitle.TextSize = 32
+KeyTitle.TextStrokeColor3 = Color3.fromRGB(255, 0, 0)
+KeyTitle.TextStrokeTransparency = 0.2
+KeyTitle.Parent = KeyUI
 
-LdrCloseBtn.MouseButton1Click:Connect(function()
-    TweenService:Create(LoaderFrame, TweenInfo.new(0.28, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
-        Size = UDim2.new(0,0,0,0), BackgroundTransparency = 1
-    }):Play()
-    task.delay(0.3, function()
-        LoaderScreenGui:Destroy()
-        FloatGui:Destroy()
-    end)
-end)
+local KeySubtitle = Instance.new("TextLabel")
+KeySubtitle.Size = UDim2.new(1, 0, 0, 20)
+KeySubtitle.Position = UDim2.new(0, 0, 0, 55)
+KeySubtitle.BackgroundTransparency = 1
+KeySubtitle.Font = Enum.Font.GothamBold
+KeySubtitle.Text = "ACCESS DIMENSION"
+KeySubtitle.TextColor3 = Color3.fromRGB(200, 50, 50)
+KeySubtitle.TextSize = 12
+KeySubtitle.LetterSpacing = 0.2
+KeySubtitle.Parent = KeyUI
 
-FloatBtn.MouseButton1Click:Connect(function()
-    if keyHidden then
-        keyHidden = false
-        hideFloat(function()
-            -- Animasyon boyutu 700'den 400'e güncellendi
-            playOpenAnim(MainContainer, 400, 250, 0.45)
-        end)
-    elseif loaderHidden then
-        loaderHidden = false
-        hideFloat(function()
-            LoaderFrame.ClipsDescendants = true
-            for _, d in ipairs(LoaderFrame:GetDescendants()) do
-                if d:IsA("TextLabel") or d:IsA("TextButton") then
-                    d.TextTransparency = 1
-                    d.TextStrokeTransparency = 1
-                end
-            end
+local InputWrapper = Instance.new("Frame")
+InputWrapper.Size = UDim2.new(0.85, 0, 0, 50)
+InputWrapper.Position = UDim2.new(0.075, 0, 0, 95)
+InputWrapper.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+InputWrapper.BackgroundTransparency = 0.5
+InputWrapper.BorderSizePixel = 0
+InputWrapper.Parent = KeyUI
+Instance.new("UICorner", InputWrapper).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", InputWrapper).Color = Color3.fromRGB(150, 0, 0)
 
-            -- Animasyon boyutu 700'den 400'e güncellendi
-            LoaderFrame.Size = UDim2.new(0, 400, 0, 250)
-            LoaderFrame.Position = UDim2.new(0.5, 0, -0.6, 0)
-            LoaderFrame.BackgroundTransparency = 0.25
-            LoaderFrame.Visible = true
+local TextBox = Instance.new("TextBox")
+TextBox.Size = UDim2.new(1, -20, 1, 0)
+TextBox.Position = UDim2.new(0, 10, 0, 0)
+TextBox.BackgroundTransparency = 1
+TextBox.Font = Enum.Font.GothamBold
+TextBox.PlaceholderText = "Enter execution key here..."
+TextBox.PlaceholderColor3 = Color3.fromRGB(120, 30, 30)
+TextBox.Text = ""
+TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+TextBox.TextSize = 16
+TextBox.TextXAlignment = Enum.TextXAlignment.Center
+TextBox.Parent = InputWrapper
 
-            local anim = TweenService:Create(LoaderFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-                Position = UDim2.new(0.5, 0, 0.5, 0)
-            })
-            anim:Play()
-            anim.Completed:Connect(function()
-                LoaderFrame.ClipsDescendants = false
-            end)
+local VerifyBtn = Instance.new("TextButton")
+VerifyBtn.Size = UDim2.new(0.85, 0, 0, 45)
+VerifyBtn.Position = UDim2.new(0.075, 0, 0, 160)
+VerifyBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+VerifyBtn.BackgroundTransparency = 0.4
+VerifyBtn.AutoButtonColor = false
+VerifyBtn.Font = Enum.Font.GothamBlack
+VerifyBtn.Text = "INITIALIZE"
+VerifyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+VerifyBtn.TextSize = 18
+VerifyBtn.Parent = KeyUI
+Instance.new("UICorner", VerifyBtn).CornerRadius = UDim.new(0, 8)
+local vbStroke = Instance.new("UIStroke", VerifyBtn)
+vbStroke.Color = Color3.fromRGB(255, 50, 50)
+vbStroke.Thickness = 2
+applyHoverEffect(VerifyBtn)
 
-            task.delay(0.25, function()
-                for _, d in ipairs(LoaderFrame:GetDescendants()) do
-                    if (d:IsA("TextLabel") or d:IsA("TextButton")) and d.Parent then
-                        TweenService:Create(d, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                            TextTransparency = 0, TextStrokeTransparency = 0.05
-                        }):Play()
+local GetKeyBtn = Instance.new("TextButton")
+GetKeyBtn.Size = UDim2.new(0.85, 0, 0, 35)
+GetKeyBtn.Position = UDim2.new(0.075, 0, 0, 215)
+GetKeyBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+GetKeyBtn.BackgroundTransparency = 0.4
+GetKeyBtn.AutoButtonColor = false
+GetKeyBtn.Font = Enum.Font.GothamBold
+GetKeyBtn.Text = "GET KEY (DISCORD)"
+GetKeyBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+GetKeyBtn.TextSize = 14
+GetKeyBtn.Parent = KeyUI
+Instance.new("UICorner", GetKeyBtn).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", GetKeyBtn).Color = Color3.fromRGB(80, 80, 80)
+applyHoverEffect(GetKeyBtn)
+
+-- [ LOADER ARAYÜZÜ ] --
+local LoaderUI = createGlassPanel("LoaderUI", UDim2.new(0, 500, 0, 350), UDim2.new(0.5, 0, 0.5, 0))
+LoaderUI.Visible = false
+LoaderUI.Parent = ContentWrapper
+
+local LoaderTitle = Instance.new("TextLabel")
+LoaderTitle.Size = UDim2.new(1, 0, 0, 50)
+LoaderTitle.Position = UDim2.new(0, 0, 0, 10)
+LoaderTitle.BackgroundTransparency = 1
+LoaderTitle.Font = Enum.Font.GothamBlack
+LoaderTitle.Text = "SELECT MODULE"
+LoaderTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+LoaderTitle.TextSize = 28
+LoaderTitle.TextStrokeColor3 = Color3.fromRGB(255, 0, 0)
+LoaderTitle.TextStrokeTransparency = 0.5
+LoaderTitle.Parent = LoaderUI
+
+local ScrollArea = Instance.new("ScrollingFrame")
+ScrollArea.Size = UDim2.new(0.9, 0, 0, 260)
+ScrollArea.Position = UDim2.new(0.05, 0, 0, 70)
+ScrollArea.BackgroundTransparency = 1
+ScrollArea.BorderSizePixel = 0
+ScrollArea.ScrollBarThickness = 4
+ScrollArea.ScrollBarImageColor3 = Color3.fromRGB(255, 0, 0)
+ScrollArea.Parent = LoaderUI
+
+local ListLayout = Instance.new("UIListLayout")
+ListLayout.Padding = UDim.new(0, 10)
+ListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+ListLayout.Parent = ScrollArea
+
+-- Yükleme Fonksiyonu ve Bitiş
+local function executeScript(scriptName, scriptUrl)
+    LoaderUI.Visible = false
+    
+    playLoadingSequence("SCRIPT EXECUTED LOADING...", 2.5, function()
+        -- Bitiş Yazısı
+        local FinalText = Instance.new("TextLabel")
+        FinalText.Size = UDim2.new(1, 0, 1, 0)
+        FinalText.Position = UDim2.new(0, 0, 0, 0)
+        FinalText.BackgroundTransparency = 1
+        FinalText.Font = Enum.Font.GothamBlack
+        FinalText.Text = "The script has been executed.\nHave a good day."
+        FinalText.TextColor3 = Color3.fromRGB(255, 255, 255)
+        FinalText.TextSize = 30
+        FinalText.TextTransparency = 1
+        FinalText.TextStrokeColor3 = Color3.fromRGB(255, 0, 0)
+        FinalText.TextStrokeTransparency = 1
+        FinalText.ZIndex = 50
+        FinalText.Parent = ScreenGui
+        
+        -- Yazıyı göster
+        TweenService:Create(FinalText, TweenInfo.new(1, Enum.EasingStyle.Sine), {TextTransparency = 0, TextStrokeTransparency = 0.5}):Play()
+        task.wait(2.5)
+        
+        -- Her şeyi yavaşça yok et
+        TweenService:Create(FinalText, TweenInfo.new(1.5), {TextTransparency = 1, TextStrokeTransparency = 1}):Play()
+        TweenService:Create(Background, TweenInfo.new(2, Enum.EasingStyle.Linear), {BackgroundTransparency = 1}):Play()
+        
+        for _, obj in ipairs(EffectContainer:GetChildren()) do
+            if obj:IsA("Frame") then
+                TweenService:Create(obj, TweenInfo.new(1), {BackgroundTransparency = 1}):Play()
+                for _, stroke in ipairs(obj:GetChildren()) do
+                    if stroke:IsA("UIStroke") then
+                        TweenService:Create(stroke, TweenInfo.new(1), {Transparency = 1}):Play()
                     end
                 end
-            end)
-        end)
-    end
-end)
-
-VerifyBtn.MouseButton1Click:Connect(function()
-    local key = KeyInput.Text
-    if key == CORRECT_KEY then
-        KeyInput.Text = "✅  KEY VERIFIED  ✅"
-        KeyInput.TextColor3 = Color3.fromRGB(50,255,120)
-        VerifyLabel.Text = "✅  VERIFIED  ✅"
-        VerifyLabel.TextColor3 = Color3.fromRGB(100,255,150)
-        VerifyBtn.BackgroundColor3 = Color3.fromRGB(0,130,30)
-        createParticles(MainContainer, 50, Color3.fromRGB(0,255,100))
-        createParticles(MainContainer, 30, Color3.fromRGB(255,200,0))
-
-        task.wait(0.8)
-
-        local slideOut = TweenService:Create(MainContainer,
-            TweenInfo.new(0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.In),
-            {Position = UDim2.new(0.5, 0, 1.5, 0)}
-        )
-        slideOut:Play()
-        slideOut.Completed:Connect(function()
-            KeyScreenGui.Enabled = false
-            task.wait(0.1)
-            openLoader()
-        end)
-    else
-        KeyInput.Text = ""
-        KeyInput.PlaceholderText = "❌  INVALID KEY  ❌"
-        KeyInput.PlaceholderColor3 = Color3.fromRGB(255,50,50)
-        for i = 1, 5 do
-            task.wait(0.05)
-            MainContainer.Position = UDim2.new(0.5, math.random(-12,12), 0.45, math.random(-6,6))
+            end
         end
-        MainContainer.Position = UDim2.new(0.5, 0, 0.45, 0)
-        createParticles(MainContainer, 25, Color3.fromRGB(255,50,50))
-        task.wait(1.5)
-        KeyInput.PlaceholderText = "🔐  Enter your key here..."
-        KeyInput.PlaceholderColor3 = Color3.fromRGB(200,80,90)
-    end
+        
+        task.wait(2)
+        
+        -- Gerçek scripti çalıştır
+        local ok, err = pcall(function()
+            -- loadstring(game:HttpGet(scriptUrl))()
+            print("ÇALIŞTIRILAN SCRIPT: " .. scriptName .. " | URL: " .. scriptUrl)
+        end)
+        if not ok then warn("Script failed:", err) end
+        
+        ScreenGui:Destroy()
+    end)
+end
+
+-- Script listesi
+local scriptsList = {
+    {name = "⚡ Blox Fruits Auto Farm", url = "KENDI_URL"},
+    {name = "🎯 Arsenal Aimbot", url = "KENDI_URL"},
+    {name = "💪 Muscle Legends", url = "KENDI_URL"},
+    {name = "🚗 Jailbreak Auto Rob", url = "KENDI_URL"},
+    {name = "🥷 Ninja Legends", url = "KENDI_URL"}
+}
+
+for _, data in ipairs(scriptsList) do
+    local sBtn = Instance.new("TextButton")
+    sBtn.Size = UDim2.new(0.98, 0, 0, 50)
+    sBtn.BackgroundColor3 = Color3.fromRGB(20, 0, 0)
+    sBtn.BackgroundTransparency = 0.3
+    sBtn.AutoButtonColor = false
+    sBtn.Font = Enum.Font.GothamBold
+    sBtn.Text = "  " .. data.name
+    sBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sBtn.TextSize = 16
+    sBtn.TextXAlignment = Enum.TextXAlignment.Left
+    sBtn.Parent = ScrollArea
+    
+    Instance.new("UICorner", sBtn).CornerRadius = UDim.new(0, 8)
+    Instance.new("UIStroke", sBtn).Color = Color3.fromRGB(100, 0, 0)
+    
+    local execIcon = Instance.new("TextLabel")
+    execIcon.Size = UDim2.new(0, 40, 1, 0)
+    execIcon.Position = UDim2.new(1, -45, 0, 0)
+    execIcon.BackgroundTransparency = 1
+    execIcon.Font = Enum.Font.GothamBold
+    execIcon.Text = "▶"
+    execIcon.TextColor3 = Color3.fromRGB(255, 50, 50)
+    execIcon.TextSize = 20
+    execIcon.Parent = sBtn
+
+    applyHoverEffect(sBtn)
+    
+    sBtn.MouseButton1Click:Connect(function()
+        executeScript(data.name, data.url)
+    end)
+end
+
+-- Scrolling Frame İçeriğini Boyutlandırma
+ScrollArea.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 20)
+ListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    ScrollArea.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 20)
 end)
 
-JoinDiscordBtn.MouseButton1Click:Connect(function()
-    safeSetClipboard(DISCORD_LINK)
-    createParticles(MainContainer, 18, Color3.fromRGB(100,120,255))
-    local orig = JoinDiscordLabel.Text
-    JoinDiscordLabel.Text = "📋  COPIED TO CLIPBOARD  📋"
-    JoinDiscordLabel.TextColor3 = Color3.fromRGB(100,255,180)
-    task.wait(1.5)
-    JoinDiscordLabel.Text = orig
-    JoinDiscordLabel.TextColor3 = Color3.fromRGB(255,255,255)
+-- [ BUTON İŞLEVLERİ (KEY SİSTEMİ) ] --
+VerifyBtn.MouseButton1Click:Connect(function()
+    if TextBox.Text == CORRECT_KEY then
+        VerifyBtn.Text = "ACCESS GRANTED"
+        VerifyBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+        vbStroke.Color = Color3.fromRGB(50, 255, 50)
+        
+        task.wait(0.5)
+        
+        -- Key UI Kapanış
+        local closeTween = TweenService:Create(KeyUI, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+            Position = UDim2.new(0.5, 0, 1.5, 0),
+            Size = UDim2.new(0, 0, 0, 0)
+        })
+        closeTween:Play()
+        closeTween.Completed:Wait()
+        KeyUI.Visible = false
+        
+        task.wait(0.2)
+        
+        -- Loader UI Açılış
+        LoaderUI.Position = UDim2.new(0.5, 0, 0.5, 100)
+        LoaderUI.Size = UDim2.new(0, 0, 0, 0)
+        LoaderUI.Visible = true
+        TweenService:Create(LoaderUI, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Position = UDim2.new(0.5, 0, 0.5, 0),
+            Size = UDim2.new(0, 500, 0, 350)
+        }):Play()
+        
+    else
+        TextBox.Text = ""
+        TextBox.PlaceholderText = "INVALID KEY"
+        TextBox.PlaceholderColor3 = Color3.fromRGB(255, 0, 0)
+        
+        local startPos = KeyUI.Position
+        for i = 1, 6 do
+            local offset = (i % 2 == 0) and 10 or -10
+            TweenService:Create(KeyUI, TweenInfo.new(0.05), {Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + offset, startPos.Y.Scale, startPos.Y.Offset)}):Play()
+            task.wait(0.05)
+        end
+        TweenService:Create(KeyUI, TweenInfo.new(0.05), {Position = startPos}):Play()
+        
+        task.wait(1)
+        TextBox.PlaceholderText = "Enter execution key here..."
+        TextBox.PlaceholderColor3 = Color3.fromRGB(120, 30, 30)
+    end
 end)
 
 GetKeyBtn.MouseButton1Click:Connect(function()
     safeSetClipboard(KEY_LINK)
-    createParticles(MainContainer, 18, Color3.fromRGB(255,180,50))
-    local orig = GetKeyLabel.Text
-    GetKeyLabel.Text = "📋  LINK COPIED  📋"
-    GetKeyLabel.TextColor3 = Color3.fromRGB(255,230,100)
-    task.wait(1.5)
-    GetKeyLabel.Text = orig
-    GetKeyLabel.TextColor3 = Color3.fromRGB(255,255,255)
+    GetKeyBtn.Text = "COPIED TO CLIPBOARD!"
+    task.wait(2)
+    GetKeyBtn.Text = "GET KEY (DISCORD)"
 end)
 
+-- [ BAŞLANGIÇ AKIŞI ] --
 task.spawn(function()
-    task.wait()
-    task.wait()
-    -- Animasyon boyutu 700'den 400'e güncellendi
-    playOpenAnim(MainContainer, 400, 250, 0.45)
+    task.wait(0.5) -- Her şeyin yüklenmesini bekle
+    
+    -- 1. Aşama: Yükleme Ekranı (%0'dan %100'e)
+    playLoadingSequence("LOADING KEY SYSTEM...", 1.8, function()
+        
+        -- 2. Aşama: Key Sisteminin Animasyonla Gelmesi
+        KeyUI.Position = UDim2.new(0.5, 0, 0.5, 100)
+        KeyUI.Size = UDim2.new(0, 0, 0, 0)
+        KeyUI.Visible = true
+        
+        TweenService:Create(KeyUI, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Position = UDim2.new(0.5, 0, 0.5, 0),
+            Size = UDim2.new(0, 450, 0, 280)
+        }):Play()
+        
+    end)
 end)
