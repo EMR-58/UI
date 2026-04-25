@@ -1,37 +1,48 @@
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/EMR-58/UI/refs/heads/main/Elerium%20ui.txt"))()
+-- 1. Kütüphaneyi Linkten Çekiyoruz (Kendi linkini buraya koy)
+local SynioxFusion = loadstring(game:HttpGet("https://raw.githubusercontent.com/EMR-58/UI/refs/heads/main/Elerium%20ui.txt"))()
 
-local Window = Library:CreateWindow({
-    Title = "Syniox Hub",
-    Size = UDim2.new(0, 650, 0, 450)
+-- 2. Ana Pencereyi Oluştur (Elerium Tasarımı & WindUI Fonksiyonları)
+local Window = SynioxFusion:CreateWindow({
+    Title = "Syniox Hub | Muscle Legends",
+    Theme = "Crimson", -- Senin istediğin kan kırmızısı geçişler
+    Size = UDim2.new(0, 680, 0, 460)
 })
 
-local MainTab = Window:Tab({
-    Title = "Main",
-    Icon = "house"
-})
+-- 3. Tabları (Sekmeleri) Oluştur
+local MainTab = Window:Tab({Title = "Main"})
+local FarmTab = Window:Tab({Title = "Farm"})
+local StatsTab = Window:Tab({Title = "Stats"})
 
-local CombatTab = Window:Tab({
-    Title = "Combat",
-    Icon = "sword"
-})
+-- 4. Farm Sekmesine Özellikleri Ekle (Örn: Auto Weight)
+-- Sen yukarıda Search'e "Auto Weight" yazınca buranın açılmasını istemiştin.
+-- Sistem otomatik olarak bu başlığı tarar ve bulur.
 
-MainTab:Button({
-    Title = "Destruction Button",
-    Desc = "Tıklandığında konsola yazı yazdırır",
-    Callback = function()
-        print("Buton çalıştı!")
-    end
-})
-
-MainTab:Toggle({
-    Title = "Auto Farm",
-    Desc = "Otomatik toplama işlemini başlatır",
+FarmTab:Toggle({
+    Title = "Auto Weight",
     Default = false,
     Callback = function(Value)
-        print("Toggle durumu: ", Value)
+        _G.AutoWeight = Value
+        while _G.AutoWeight do
+            task.wait()
+            -- Buraya Muscle Legends ağırlık kaldırma remote kodunu yazacaksın
+            game:GetService("Players").LocalPlayer.muscleEvent:FireServer("reps")
+        end
     end
 })
 
+FarmTab:Toggle({
+    Title = "Auto Pushups",
+    Default = false,
+    Callback = function(Value)
+        _G.AutoPushups = Value
+        while _G.AutoPushups do
+            task.wait()
+            game:GetService("Players").LocalPlayer.muscleEvent:FireServer("pushups")
+        end
+    end
+})
+
+-- 5. Main Sekmesine Diğer Özellikleri Ekle
 MainTab:Slider({
     Title = "WalkSpeed",
     Min = 16,
@@ -42,10 +53,13 @@ MainTab:Slider({
     end
 })
 
-CombatTab:Button({
-    Title = "Kill All",
-    Desc = "Ekrandaki herkesi etkisiz hale getirir",
+MainTab:Button({
+    Title = "Rebirth",
     Callback = function()
-        warn("Özellik aktif edildi")
+        game:GetService("ReplicatedStorage").rEvents.rebirthEvent:FireServer("rebirthRequest")
     end
 })
+
+-- 6. Profil Paneli (Sağ Alt)
+-- Bu kısım kütüphanenin içinde zaten otomatiktir. 
+-- LocalPlayer verilerini çekip sağ alta yuvarlak resmini koyar.
