@@ -1,0 +1,51 @@
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/EMR-58/UI/refs/heads/main/Elerium%20ui.txt"))()
+
+local Window = Library:CreateWindow({
+    Title = "Syniox Hub",
+    Size = UDim2.new(0, 650, 0, 450)
+})
+
+local MainTab = Window:Tab({
+    Title = "Main",
+    Icon = "house"
+})
+
+local CombatTab = Window:Tab({
+    Title = "Combat",
+    Icon = "sword"
+})
+
+MainTab:Button({
+    Title = "Destruction Button",
+    Desc = "Tıklandığında konsola yazı yazdırır",
+    Callback = function()
+        print("Buton çalıştı!")
+    end
+})
+
+MainTab:Toggle({
+    Title = "Auto Farm",
+    Desc = "Otomatik toplama işlemini başlatır",
+    Default = false,
+    Callback = function(Value)
+        print("Toggle durumu: ", Value)
+    end
+})
+
+MainTab:Slider({
+    Title = "WalkSpeed",
+    Min = 16,
+    Max = 250,
+    Default = 16,
+    Callback = function(Value)
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+    end
+})
+
+CombatTab:Button({
+    Title = "Kill All",
+    Desc = "Ekrandaki herkesi etkisiz hale getirir",
+    Callback = function()
+        warn("Özellik aktif edildi")
+    end
+})
